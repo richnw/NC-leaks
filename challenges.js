@@ -57,7 +57,12 @@ function getInterests() {
             interestsArray.push(interest);
           });
         });
-        if (userCount === usernames.length) console.log(interestsArray);
+        if (userCount === usernames.length) {
+          const jsonInterests = JSON.stringify(interestsArray);
+          fs.writeFile("interests.json", jsonInterests, (err) => {
+            console.log("file saved");
+          });
+        }
       });
       request.end();
     });
