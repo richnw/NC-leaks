@@ -1,6 +1,7 @@
 const https = require("node:https");
 const fs = require("fs");
 const { parse } = require("node:path");
+const { getPackedSettings } = require("node:http2");
 
 function getPeople() {
   const options = {
@@ -68,4 +69,47 @@ function getInterests() {
     });
   });
 }
-getInterests();
+
+
+function getPets() {
+  fs.readFile("northcoders.json", "utf8", (err, data) => {
+    const parsedData = JSON.parse(data);
+    const usernames = parsedData.map((user) => user.username );
+    
+    const petsArray = [];
+    let userCount = 0;
+    usernames.forEach((user) => {
+      const options = {
+        hostname: "nc-leaks.herokuapp.com",
+        path: `/api/people/${user}/pets`,
+        method: "GET",
+      };
+      const request = https.request(options, (response) => {
+        userCount++;
+        response.setEncoding("utf8");
+        let body = "";
+        response.on("data", (packet) => {
+          body += packet;
+        });
+        response.on("end", () => {
+          const parsedBody = JSON.parse(body);
+          // console.log(parsedBody)
+          if(parsedBody.hasOwnProperty('person')){
+          parsedBody.person.pets.forEach((pet) => {
+            petsArray.push(pet);
+          });}
+        });
+        if (userCount === usernames.length) {
+          console.log(petsArray, 'petarray');
+          const jsonPets = JSON.stringify(petsArray);
+          // fs.writeFile("pets.json", jsonPets, (err) => {
+          //   console.log("file saved");
+          // });
+        }
+      });
+      request.end();
+    });
+  });
+
+}
+getPets()
